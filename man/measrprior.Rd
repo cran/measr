@@ -9,7 +9,7 @@
 \usage{
 measrprior(
   prior,
-  class = c("intercept", "maineffect", "interaction", "slip", "guess"),
+  class = c("structural", "intercept", "maineffect", "interaction", "slip", "guess"),
   coef = NA,
   lb = NA,
   ub = NA
@@ -62,8 +62,11 @@ specified as character strings.
 # Use alias functions to define priors without quotes, as formulas,
 # or as character strings.
 (prior1 <- prior(lognormal(0, 1), class = maineffect))
+
 (prior2 <- prior_(~lognormal(0, 1), class = ~maineffect))
+
 (prior3 <- prior_string("lognormal(0, 1)", class = "maineffect"))
+
 identical(prior1, prior2)
 identical(prior1, prior3)
 identical(prior2, prior3)

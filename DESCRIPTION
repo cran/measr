@@ -1,6 +1,6 @@
 Package: measr
 Title: Bayesian Psychometric Measurement Using 'Stan'
-Version: 0.2.1
+Version: 0.3.1
 Authors@R: c(
     person("W. Jake", "Thompson", , "wjakethompson@gmail.com", role = c("aut", "cre"),
            comment = c(ORCID = "0000-0001-7339-0300")),
@@ -46,7 +46,7 @@ Biarch: true
 SystemRequirements: GNU make
 VignetteBuilder: knitr
 NeedsCompilation: yes
-Packaged: 2023-03-31 17:22:30 UTC; jakethompson
+Packaged: 2023-05-27 16:51:41 UTC; jakethompson
 Author: W. Jake Thompson [aut, cre] (<https://orcid.org/0000-0001-7339-0300>),
   Nathan Jones [ctb] (<https://orcid.org/0000-0001-6177-7161>),
   Matthew Johnson [cph] (Provided code adapted for
@@ -56,4 +56,4 @@ Author: W. Jake Thompson [aut, cre] (<https://orcid.org/0000-0001-7339-0300>),
   Institute of Education Sciences [fnd]
 Maintainer: W. Jake Thompson <wjakethompson@gmail.com>
 Repository: CRAN
-Date/Publication: 2023-04-03 10:10:02 UTC
+Date/Publication: 2023-05-27 22:30:03 UTC
