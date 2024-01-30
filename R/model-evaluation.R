@@ -200,6 +200,7 @@ add_fit <- function(x, method = c("m2", "ppmc"), overwrite = FALSE,
   # determine if/which ppmc need to be run
   dots <- list(...)
   run_ppmc <- existing_ppmc_check(model, method, dots, overwrite)
+  run_ppmc$args$force <- TRUE
 
   if (run_m2) {
     model$fit$m2 <- fit_m2(model, ci = ci)
@@ -226,7 +227,8 @@ add_respondent_estimates <- function(x, probs = c(0.025, 0.975),
   run_pred <- length(model$respondent_estimates) == 0 || overwrite
 
   if (run_pred) {
-    model$respondent_estimates <- stats::predict(model, probs = probs)
+    model$respondent_estimates <- stats::predict(model, summary = TRUE,
+                                                 probs = probs)
   }
 
   # re-save model object (if applicable)

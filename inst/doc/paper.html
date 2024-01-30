@@ -1,0 +1,471 @@
+<!DOCTYPE html>
+
+<html>
+
+<head>
+
+<meta charset="utf-8" />
+<meta name="generator" content="pandoc" />
+<meta http-equiv="X-UA-Compatible" content="IE=EDGE" />
+
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+
+
+<meta name="date" content="2023-11-06" />
+
+<title>measr: Bayesian psychometric measurement using Stan</title>
+
+<script>// Pandoc 2.9 adds attributes on both header and div. We remove the former (to
+// be compatible with the behavior of Pandoc < 2.8).
+document.addEventListener('DOMContentLoaded', function(e) {
+  var hs = document.querySelectorAll("div.section[class*='level'] > :first-child");
+  var i, h, a;
+  for (i = 0; i < hs.length; i++) {
+    h = hs[i];
+    if (!/^h[1-6]$/i.test(h.tagName)) continue;  // it should be a header h1-h6
+    a = h.attributes;
+    while (a.length > 0) h.removeAttribute(a[0].name);
+  }
+});
+</script>
+
+<style type="text/css">
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+span.underline{text-decoration: underline;}
+div.column{display: inline-block; vertical-align: top; width: 50%;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+</style>
+
+
+
+
+
+
+<style type="text/css">
+
+div.csl-bib-body { }
+div.csl-entry {
+clear: both;
+margin-bottom: 0em;
+}
+.hanging div.csl-entry {
+margin-left:2em;
+text-indent:-2em;
+}
+div.csl-left-margin {
+min-width:2em;
+float:left;
+}
+div.csl-right-inline {
+margin-left:2em;
+padding-left:1em;
+}
+div.csl-indent {
+margin-left: 2em;
+}
+</style>
+
+<style type="text/css">body {
+background-color: #fff;
+margin: 1em auto;
+max-width: 700px;
+overflow: visible;
+padding-left: 2em;
+padding-right: 2em;
+font-family: "Open Sans", "Helvetica Neue", Helvetica, Arial, sans-serif;
+font-size: 14px;
+line-height: 1.35;
+}
+#TOC {
+clear: both;
+margin: 0 0 10px 10px;
+padding: 4px;
+width: 400px;
+border: 1px solid #CCCCCC;
+border-radius: 5px;
+background-color: #f6f6f6;
+font-size: 13px;
+line-height: 1.3;
+}
+#TOC .toctitle {
+font-weight: bold;
+font-size: 15px;
+margin-left: 5px;
+}
+#TOC ul {
+padding-left: 40px;
+margin-left: -1.5em;
+margin-top: 5px;
+margin-bottom: 5px;
+}
+#TOC ul ul {
+margin-left: -2em;
+}
+#TOC li {
+line-height: 16px;
+}
+table {
+margin: 1em auto;
+border-width: 1px;
+border-color: #DDDDDD;
+border-style: outset;
+border-collapse: collapse;
+}
+table th {
+border-width: 2px;
+padding: 5px;
+border-style: inset;
+}
+table td {
+border-width: 1px;
+border-style: inset;
+line-height: 18px;
+padding: 5px 5px;
+}
+table, table th, table td {
+border-left-style: none;
+border-right-style: none;
+}
+table thead, table tr.even {
+background-color: #f7f7f7;
+}
+p {
+margin: 0.5em 0;
+}
+blockquote {
+background-color: #f6f6f6;
+padding: 0.25em 0.75em;
+}
+hr {
+border-style: solid;
+border: none;
+border-top: 1px solid #777;
+margin: 28px 0;
+}
+dl {
+margin-left: 0;
+}
+dl dd {
+margin-bottom: 13px;
+margin-left: 13px;
+}
+dl dt {
+font-weight: bold;
+}
+ul {
+margin-top: 0;
+}
+ul li {
+list-style: circle outside;
+}
+ul ul {
+margin-bottom: 0;
+}
+pre, code {
+background-color: #f7f7f7;
+border-radius: 3px;
+color: #333;
+white-space: pre-wrap; 
+}
+pre {
+border-radius: 3px;
+margin: 5px 0px 10px 0px;
+padding: 10px;
+}
+pre:not([class]) {
+background-color: #f7f7f7;
+}
+code {
+font-family: Consolas, Monaco, 'Courier New', monospace;
+font-size: 85%;
+}
+p > code, li > code {
+padding: 2px 0px;
+}
+div.figure {
+text-align: center;
+}
+img {
+background-color: #FFFFFF;
+padding: 2px;
+border: 1px solid #DDDDDD;
+border-radius: 3px;
+border: 1px solid #CCCCCC;
+margin: 0 5px;
+}
+h1 {
+margin-top: 0;
+font-size: 35px;
+line-height: 40px;
+}
+h2 {
+border-bottom: 4px solid #f7f7f7;
+padding-top: 10px;
+padding-bottom: 2px;
+font-size: 145%;
+}
+h3 {
+border-bottom: 2px solid #f7f7f7;
+padding-top: 10px;
+font-size: 120%;
+}
+h4 {
+border-bottom: 1px solid #f7f7f7;
+margin-left: 8px;
+font-size: 105%;
+}
+h5, h6 {
+border-bottom: 1px solid #ccc;
+font-size: 105%;
+}
+a {
+color: #0033dd;
+text-decoration: none;
+}
+a:hover {
+color: #6666ff; }
+a:visited {
+color: #800080; }
+a:visited:hover {
+color: #BB00BB; }
+a[href^="http:"] {
+text-decoration: underline; }
+a[href^="https:"] {
+text-decoration: underline; }
+
+code > span.kw { color: #555; font-weight: bold; } 
+code > span.dt { color: #902000; } 
+code > span.dv { color: #40a070; } 
+code > span.bn { color: #d14; } 
+code > span.fl { color: #d14; } 
+code > span.ch { color: #d14; } 
+code > span.st { color: #d14; } 
+code > span.co { color: #888888; font-style: italic; } 
+code > span.ot { color: #007020; } 
+code > span.al { color: #ff0000; font-weight: bold; } 
+code > span.fu { color: #900; font-weight: bold; } 
+code > span.er { color: #a61717; background-color: #e3d2d2; } 
+</style>
+
+
+
+
+</head>
+
+<body>
+
+
+
+
+<h1 class="title toc-ignore">measr: Bayesian psychometric measurement
+using Stan</h1>
+<h4 class="date">6 November 2023</h4>
+
+
+
+<div id="summary" class="section level1">
+<h1>Summary</h1>
+<p>In educational and psychological research, we are often interested in
+discrete latent states of individuals responding to an assessment (e.g.,
+proficiency or non-proficiency on educational standards, the presence or
+absence of a psychological disorder). Diagnostic classification models
+(DCMs; also called cognitive diagnostic models [CDMs]) are a type of
+psychometric model that facilitates these inferences <span class="citation">(<a href="#ref-rupp-dcm">Rupp et al., 2010</a>; <a href="#ref-dcm-handbook">von Davier &amp; Lee, 2019</a>)</span>. DCMs
+are multi-dimensional, meaning that we can classify respondents on
+multiple latent attributes within a profile of skills. A Q-matrix is
+then used to define which items on the assessment measure each
+attribute. Using the pre-defined latent profiles and the Q-matrix, DCMs
+then estimate the probability that respondents are in profile, or have
+the corresponding pattern of proficiency, or presence, of the
+attributes. This means that DCMs are able to provide fine-grained
+feedback on specific skills that may need additional instruction in an
+educational context, or particular symptoms that may be contributing to
+a diagnosis in a psychological context. Finally, because DCMs are
+classifying respondents rather than placing them along a performance
+continuum, these models are able to achieve more reliable results with
+shorter test lengths <span class="citation">(<a href="#ref-templin2013a">Templin &amp; Bradshaw, 2013</a>)</span>,
+reducing the burden on respondents.</p>
+<p>Given these benefits, the goal of measr is to make DCMs more
+accessible to applied researchers and practitioners by providing a
+simple interface for estimating and evaluating DCMs.</p>
+</div>
+<div id="statement-of-need" class="section level1">
+<h1>Statement of need</h1>
+<p>measr is an R package developed to easily estimate and evaluate DCMs
+in applied settings. Despite the ability of DCMs to provide reliable,
+fine-grained feedback on specific skills, these models have not been
+widely used for research or operational programs. This is due in large
+part to limitations in existing software for estimating and evaluating
+DCMs <span class="citation">(<a href="#ref-ravand2020">Ravand &amp;
+Baghaei, 2020</a>; <a href="#ref-sessoms2018">Sessoms &amp; Henson,
+2018</a>)</span>. Typically, DCMs are estimated with a maximum
+likelihood estimator and then evaluated using limited-information fit
+indices <span class="citation">(e.g., <a href="#ref-liu2016">Liu et al.,
+2016</a>)</span>. This is the approach taken when using Mplus <span class="citation">(e.g., <a href="#ref-templin2013b">Templin &amp;
+Hoffman, 2013</a>)</span> and popular R packages GDINA <span class="citation">(<a href="#ref-R-gdina">Ma &amp; de la Torre,
+2020</a>)</span> and CDM <span class="citation">(<a href="#ref-R-cdm">George et al., 2016</a>)</span>. However, as the name
+“limited-information” implies, these methods only look at limited
+relationships between the items, such as univariate or bivariate
+relationships. This means that higher-level relationships between the
+items cannot be evaluated (e.g., relationships between triplets of
+items).</p>
+<p>Bayesian estimation methods offer more robust methods for evaluating
+model fit through posterior predictive checks <span class="citation">(<a href="#ref-park2015">Park et al., 2015</a>; <a href="#ref-thompson2019">Thompson, 2019</a>)</span>. To date, there are
+three R packages that offer Bayesian estimation of DCMs: dina <span class="citation">(<a href="#ref-R-dina">Culpepper, 2015</a>)</span>,
+hmcdm <span class="citation">(<a href="#ref-R-hmcdm">Zhang et al.,
+2023</a>)</span>, and blatent <span class="citation">(<a href="#ref-R-blatent">Templin, 2020</a>)</span>. However, all of these
+packages only estimate a single type of DCM, severely limiting their
+generalizability to a wide range of applications.</p>
+<p>The measr package seeks to overcome the limitations of existing
+software options by serving as an interface to the Stan probabilistic
+programming language <span class="citation">(<a href="#ref-stan">Carpenter et al., 2017</a>)</span>. With Stan as a
+backend, measr can estimate a wide variety of DCMs. Primarily, measr
+supports the estimation of the loglinear cognitive diagnostic model
+(LCDM). However, because the LCDM is a general DCM that subsumes many
+subtypes <span class="citation">(<a href="#ref-lcdm">Henson et al.,
+2008</a>)</span>, measr also supports other DCMs such as the
+deterministic inputs, noisy “and” gate (DINA) model <span class="citation">(<a href="#ref-dina">de la Torre &amp; Douglas,
+2004</a>)</span> and the deterministic inputs, noisy “or” gate (DINO)
+model <span class="citation">(<a href="#ref-dino">Templin &amp; Henson,
+2006</a>)</span>. After estimation, measr provides model evaluations
+using both limited-information indices and posterior predictive checks.
+By providing straightforward estimation and evaluation of DCMs, measr
+makes these models more accessible to practitioners and applied
+researchers. Thus, with measr, users get the power of Bayesian methods
+for model evaluation, compatibility with other packages in the larger
+Stan ecosystem, and a user-friendly interface so that knowledge of the
+Stan language is not required. However, models estimated with measr also
+include the fitted Stan object, so users can access it if they are
+familiar with Stan and prefer to work with that object. Additionally,
+the Stan code used to estimate the model is also returned so that users
+familiar with the Stan language can use that code as a starting point
+for writing their own customized models.</p>
+</div>
+<div id="acknowledgments" class="section level1">
+<h1>Acknowledgments</h1>
+<p>The research reported here was supported by the Institute of
+Education Sciences, U.S. Department of Education, through Grant <a href="https://ies.ed.gov/funding/grantsearch/details.asp?ID=4546">R305D210045</a>
+to the University of Kansas. The opinions expressed are those of the
+authors and do not represent the views of the Institute or the U.S.
+Department of Education.</p>
+<p>We are grateful to the project advisory committee members who
+provided feedback on the development of the R package: Russell Almond,
+Claudia Flowers, Robert Henson, and Matthew Madison.</p>
+</div>
+<div id="references" class="section level1 unnumbered">
+<h1 class="unnumbered">References</h1>
+<div id="refs" class="references csl-bib-body hanging-indent" entry-spacing="0" line-spacing="2">
+<div id="ref-stan" class="csl-entry">
+Carpenter, B., Gelman, A., Hoffman, M. D., Lee, D., Goodrich, B.,
+Betancourt, M., Brubaker, M., Guo, J., Li, P., &amp; Riddell, A. (2017).
+<span>Stan</span>: <span>A</span> probabilistic programming language.
+<em>Journal of Statistical Software</em>, <em>76</em>(1), 1–32. <a href="https://doi.org/10.18637/jss.v076.i01">https://doi.org/10.18637/jss.v076.i01</a>
+</div>
+<div id="ref-R-dina" class="csl-entry">
+Culpepper, S. A. (2015). <span>Bayesian</span> estimation of the
+<span>DINA</span> model with <span>Gibbs</span> sampling. <em>Journal of
+Educational and Behavioral Statistics</em>, <em>40</em>(5), 454–476. <a href="https://doi.org/10.3102/1076998615595403">https://doi.org/10.3102/1076998615595403</a>
+</div>
+<div id="ref-dina" class="csl-entry">
+de la Torre, J., &amp; Douglas, J. A. (2004). Higher-order latent trait
+models for cognitive diagnosis. <em>Psychometrika</em>, <em>69</em>(3),
+333–353. <a href="https://doi.org/10.1007/BF02295640">https://doi.org/10.1007/BF02295640</a>
+</div>
+<div id="ref-R-cdm" class="csl-entry">
+George, A. C., Robitzsch, A., Kiefer, T., Groß, J., &amp; Ünlü, A.
+(2016). The <span>R</span> package <span>CDM</span> for cognitive
+diagnosis models. <em>Journal of Statistical Software</em>,
+<em>74</em>(2), 1–24. <a href="https://doi.org/10.18637/jss.v074.i02">https://doi.org/10.18637/jss.v074.i02</a>
+</div>
+<div id="ref-lcdm" class="csl-entry">
+Henson, R. A., Templin, J., &amp; Willse, J. T. (2008). Defining a
+family of cognitive diagnosis models using log-linear models with latent
+variables. <em>Psychometrika</em>, <em>74</em>(2), 191–210. <a href="https://doi.org/10.1007/s11336-008-9089-5">https://doi.org/10.1007/s11336-008-9089-5</a>
+</div>
+<div id="ref-liu2016" class="csl-entry">
+Liu, Y., Tian, W., &amp; Xin, T. (2016). An application of <span class="math inline">\(M_2\)</span> statistic to evaluate the fit of
+cognitive diagnostic models. <em>Journal of Educational and Behavioral
+Statistics</em>, <em>41</em>(1), 3–26. <a href="https://doi.org/10.3102/1076998615621293">https://doi.org/10.3102/1076998615621293</a>
+</div>
+<div id="ref-R-gdina" class="csl-entry">
+Ma, W., &amp; de la Torre, J. (2020). <span>GDINA</span>: An
+<span>R</span> package for cognitive diagnosis modeling. <em>Journal of
+Statistical Software</em>, <em>93</em>(14), 1–26. <a href="https://doi.org/10.18637/jss.v093.i14">https://doi.org/10.18637/jss.v093.i14</a>
+</div>
+<div id="ref-park2015" class="csl-entry">
+Park, J. Y., Johnson, M. S., &amp; Lee, Y.-S. (2015). Posterior
+predictive model checks for cognitive diagnostic models.
+<em>International Journal of Quantitative Research in Education</em>,
+<em>2</em>(3–4), 244–264. <a href="https://doi.org/10.1504/IJQRE.2015.071738">https://doi.org/10.1504/IJQRE.2015.071738</a>
+</div>
+<div id="ref-ravand2020" class="csl-entry">
+Ravand, H., &amp; Baghaei, P. (2020). Diagnostic classification models:
+Recent developments, practical issues, and prospects. <em>International
+Journal of Testing</em>, <em>20</em>(1), 24–56. <a href="https://doi.org/10.1080/15305058.2019.1588278">https://doi.org/10.1080/15305058.2019.1588278</a>
+</div>
+<div id="ref-rupp-dcm" class="csl-entry">
+Rupp, A. A., Templin, J., &amp; Henson, R. A. (2010). <em>Diagnostic
+measurement: Theory, methods, and applications</em>. Guilford Press.
+</div>
+<div id="ref-sessoms2018" class="csl-entry">
+Sessoms, J., &amp; Henson, R. A. (2018). Applications of diagnostic
+classification models: A literature review and critical commentary.
+<em>Measurement: Interdisciplinary Research and Perspectives</em>,
+<em>16</em>(1), 1–17. <a href="https://doi.org/10.1080/15366367.2018.1435104">https://doi.org/10.1080/15366367.2018.1435104</a>
+</div>
+<div id="ref-R-blatent" class="csl-entry">
+Templin, J. (2020). <em><span class="nocase">blatent</span>:
+<span>Bayesian</span> latent variable models</em>. <a href="https://CRAN.R-project.org/package=blatent">https://CRAN.R-project.org/package=blatent</a>
+</div>
+<div id="ref-templin2013a" class="csl-entry">
+Templin, J., &amp; Bradshaw, L. (2013). Measuring the reliability of
+diagnostic classification model examinee estimates. <em>Journal of
+Classification</em>, <em>30</em>(2), 251–275. <a href="https://doi.org/10.1007/s00357-013-9129-4">https://doi.org/10.1007/s00357-013-9129-4</a>
+</div>
+<div id="ref-dino" class="csl-entry">
+Templin, J., &amp; Henson, R. A. (2006). Measurement of psychological
+disorders using cognitive diagnosis models. <em>Psychological
+Methods</em>, <em>11</em>(3), 287–305. <a href="https://doi.org/10.1037/1082-989X.11.3.287">https://doi.org/10.1037/1082-989X.11.3.287</a>
+</div>
+<div id="ref-templin2013b" class="csl-entry">
+Templin, J., &amp; Hoffman, L. (2013). Obtaining diagnostic
+classification model estimates using mplus. <em>Educational Measurement:
+Issues and Practice</em>, <em>32</em>(2), 37–50. <a href="https://doi.org/10.1111/emip.12010">https://doi.org/10.1111/emip.12010</a>
+</div>
+<div id="ref-thompson2019" class="csl-entry">
+Thompson, W. J. (2019). <em>Bayesian psychometrics for diagnostic
+assessments: A proof of concept</em> (Research Report No. 19-01).
+University of Kansas; <span>Accessible Teaching, Learning, and
+Assessment Systems</span>. <a href="https://doi.org/10.35542/osf.io/jzqs8">https://doi.org/10.35542/osf.io/jzqs8</a>
+</div>
+<div id="ref-dcm-handbook" class="csl-entry">
+von Davier, M., &amp; Lee, Y.-S. (Eds.). (2019). <em>Handbook of
+diagnostic classification models: Models and model extensions,
+applications, software packages</em>. Springer Cham. <a href="https://doi.org/10.1007/978-3-030-05584-4">https://doi.org/10.1007/978-3-030-05584-4</a>
+</div>
+<div id="ref-R-hmcdm" class="csl-entry">
+Zhang, S., Wang, S., Chen, Y., &amp; Kwon, S. (2023). <em><span class="nocase">hmcdm</span>: <span>Hidden</span> <span>Markov</span>
+cognitive diagnosis models for learning</em>. <a href="https://CRAN.R-project.org/package=hmcdm">https://CRAN.R-project.org/package=hmcdm</a>
+</div>
+</div>
+</div>
+
+
+
+<!-- code folding -->
+
+
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+  (function () {
+    var script = document.createElement("script");
+    script.type = "text/javascript";
+    script.src  = "https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML";
+    document.getElementsByTagName("head")[0].appendChild(script);
+  })();
+</script>
+
+</body>
+</html>

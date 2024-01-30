@@ -10,7 +10,8 @@ fit_ppmc(
   probs = c(0.025, 0.975),
   return_draws = 0,
   model_fit = c("raw_score"),
-  item_fit = c("conditional_prob", "odds_ratio")
+  item_fit = c("conditional_prob", "odds_ratio"),
+  force = FALSE
 )
 }
 \arguments{
@@ -43,6 +44,9 @@ evaluation of item-level fit. If \code{NULL}, no item-level checks are computed.
 Multiple checks can be provided in order to calculate more than one check
 simultaneously (e.g., \code{item_fit = c("conditional_prob", "odds_ratio")}).
 See details.}
+
+\item{force}{If all requested PPMCs have already been added to the model
+object using \code{\link[=add_fit]{add_fit()}}, should they be recalculated. Default is \code{FALSE}.}
 }
 \value{
 A list with two elements, "model_fit" and "item_fit". If either
@@ -95,15 +99,15 @@ respondent in each class provides a correct response (\code{item_fit = "conditio
 et al. (2006).
 }
 \examples{
-\dontshow{if (interactive()) (if (getRversion() >= "3.4") withAutoprint else force)(\{ # examplesIf}
-cmds_mdm_dina <- measr_dcm(
+\dontshow{if (measr_examples()) (if (getRversion() >= "3.4") withAutoprint else force)(\{ # examplesIf}
+mdm_dina <- measr_dcm(
   data = mdm_data, missing = NA, qmatrix = mdm_qmatrix,
   resp_id = "respondent", item_id = "item", type = "dina",
   method = "mcmc", seed = 63277, backend = "rstan",
-  iter = 700, warmup = 500, chains = 2
+  iter = 700, warmup = 500, chains = 2, refresh = 0
 )
 
-fit_ppmc(cmds_mdm_dina, model_fit = "raw_score", item_fit = NULL)
+fit_ppmc(mdm_dina, model_fit = "raw_score", item_fit = NULL)
 \dontshow{\}) # examplesIf}
 }
 \references{

@@ -3,24 +3,25 @@ lcdm_script <- function(qmatrix, prior = NULL, strc = "unconstrained",
   # data block -----
   data_block <- glue::glue(
     "data {{
-      int<lower=1> I;                 // number of items
-      int<lower=1> R;                 // number of respondents
-      int<lower=1> N;                 // number of observations
-      int<lower=1> C;                 // number of classes
-      int<lower=1> A;                 // number of attributes
-      int<lower=1,upper=I> ii[N];     // item for observation n
-      int<lower=1,upper=R> rr[N];     // respondent for observation n
-      int<lower=0,upper=1> y[N];      // score for observation n
-      int<lower=1,upper=N> start[R];  // starting row for respondent R
-      int<lower=1,upper=I> num[R];    // number of rows (items) for respondent R
-      matrix[C,A] Alpha;              // attribute pattern for each class
-      matrix[I,C] Xi;                 // class attribute mastery indicator
+      int<lower=1> I;                      // number of items
+      int<lower=1> R;                      // number of respondents
+      int<lower=1> N;                      // number of observations
+      int<lower=1> C;                      // number of classes
+      int<lower=1> A;                      // number of attributes
+      array[N] int<lower=1,upper=I> ii;    // item for observation n
+      array[N] int<lower=1,upper=R> rr;    // respondent for observation n
+      array[N] int<lower=0,upper=1> y;     // score for observation n
+      array[R] int<lower=1,upper=N> start; // starting row for respondent R
+      array[R] int<lower=1,upper=I> num;   // number of items for respondent R
+      matrix[C,A] Alpha;                   // attribute pattern for each class
+      matrix[I,C] Xi;                      // class attribute mastery indicator
     }}"
   )
 
   # parameters block -----
   all_params <- get_parameters(qmatrix = qmatrix, item_id = NULL,
-                               rename_att = TRUE, type = "lcdm",
+                               rename_att = TRUE, rename_item = TRUE,
+                               type = "lcdm",
                                attribute_structure = strc)
   strc_params <- all_params %>%
     dplyr::filter(.data$class == "structural")
@@ -39,11 +40,6 @@ lcdm_script <- function(qmatrix, prior = NULL, strc = "unconstrained",
       ),
       atts = gsub("[^0-9|_]", "", .data$parameter),
       comp_atts = one_down_params(.data$atts, item = .data$item_id),
-      num_comp = dplyr::case_when(
-        comp_atts == "" ~ 0,
-        TRUE ~ sapply(gregexpr(pattern = ",", text = .data$comp_atts),
-                      function(.x) length(attr(.x, "match.length"))) + 1
-      ),
       param_name = glue::glue("l{item_id}_{param_level}",
                               "{gsub(\"__\", \"\", atts)}"),
       constraint = dplyr::case_when(
@@ -182,15 +178,15 @@ lcdm_script <- function(qmatrix, prior = NULL, strc = "unconstrained",
 
   model_block <- glue::glue(
     "model {{",
-    "  real ps[C];",
     "",
     "  ////////////////////////////////// priors",
     "  {glue::glue_collapse(all_priors, sep = \"\n  \")}",
     "",
     "  ////////////////////////////////// likelihood",
     "  for (r in 1:R) {{",
+    "    row_vector[C] ps;",
     "    for (c in 1:C) {{",
-    "      real log_items[num[r]];",
+    "      array[num[r]] real log_items;",
     "      for (m in 1:num[r]) {{",
     "        int i = ii[start[r] + m - 1];",
     "        log_items[m] = y[start[r] + m - 1] * log(pi[i,c]) +",

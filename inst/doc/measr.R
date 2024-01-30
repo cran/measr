@@ -4,6 +4,38 @@ knitr::opts_chunk$set(
   comment = "#>"
 )
 
+## ----install-rstan, eval = FALSE----------------------------------------------
+#  install.packages("rstan")
+
+## ----rstan-test, eval = FALSE-------------------------------------------------
+#  library(rstan)
+#  
+#  example(stan_model, package = "rstan", run.dontrun = TRUE)
+
+## ----stan-repo, eval = FALSE--------------------------------------------------
+#  install.packages("cmdstanr",
+#                   repos = c("https://mc-stan.org/r-packages/",
+#                             getOption("repos")))
+
+## ----stan-dev, eval = FALSE---------------------------------------------------
+#  # install.packages("remotes")
+#  remotes::install_github("stan-dev/cmdstanr")
+
+## ----check-toolchain, eval = FALSE--------------------------------------------
+#  library(cmdstanr)
+#  
+#  check_cmdstan_toolchain()
+
+## ----install-cmdstan, eval = FALSE--------------------------------------------
+#  install_cmdstan(cores = 2)
+
+## ----install-measr, eval = FALSE----------------------------------------------
+#  install.packages("measr")
+
+## ----measr-dev, eval = FALSE--------------------------------------------------
+#  # install.packages("remotes")
+#  remotes::install_github("wjakethompson/measr")
+
 ## ----load-pkg-----------------------------------------------------------------
 library(measr)
 

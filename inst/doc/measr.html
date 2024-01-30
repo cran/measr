@@ -49,7 +49,7 @@ overflow: visible;
 </style>
 <style type="text/css" data-origin="pandoc">
 pre > code.sourceCode { white-space: pre; position: relative; }
-pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span { line-height: 1.25; }
 pre > code.sourceCode > span:empty { height: 1.2em; }
 .sourceCode { overflow: visible; }
 code.sourceCode > span { color: inherit; text-decoration: inherit; }
@@ -148,6 +148,7 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; }
 div.csl-bib-body { }
 div.csl-entry {
 clear: both;
+margin-bottom: 0em;
 }
 .hanging div.csl-entry {
 margin-left:2em;
@@ -378,55 +379,114 @@ Estimation functions are used for building the DCM using the <a href="https://mc
 and getting estimates of respondent proficiency. Evaluation functions
 can then be applied to the fitted model to assess how well the estimates
 represent the observed data.</p>
-<div class="sourceCode" id="cb1"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" tabindex="-1"></a><span class="fu">library</span>(measr)</span></code></pre></div>
+<div id="installation" class="section level2">
+<h2>Installation</h2>
+<p>Because measr uses <em>Stan</em> as a backend for estimating DCMs, an
+installation of <a href="https://mc-stan.org/rstan/">rstan</a> or <a href="https://mc-stan.org/cmdstanr/">cmdstanr</a> is required.</p>
+<div id="rstan" class="section level3">
+<h3>rstan</h3>
+<p>Before installing rstan, your system must be configured to compile
+C++ code. You can find instructions on the <a href="https://github.com/stan-dev/rstan/wiki/RStan-Getting-Started">RStan
+Getting Started</a> guide for <a href="https://github.com/stan-dev/rstan/wiki/Configuring-C---Toolchain-for-Windows">Windows</a>,
+<a href="https://github.com/stan-dev/rstan/wiki/Configuring-C---Toolchain-for-Mac">Mac</a>,
+and <a href="https://github.com/stan-dev/rstan/wiki/Configuring-C-Toolchain-for-Linux">Linux</a>.</p>
+<p>The rstan package can then be installed directly from CRAN:</p>
+<div class="sourceCode" id="cb1"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" tabindex="-1"></a><span class="fu">install.packages</span>(<span class="st">&quot;rstan&quot;</span>)</span></code></pre></div>
+<p>To verify the installation was successful, you can run a test model.
+If everything is set up correctly, the model should compile and sample.
+For additional troubleshooting help, see the <a href="https://github.com/stan-dev/rstan/wiki/RStan-Getting-Started">RStan
+Getting Started</a> guide.</p>
+<div class="sourceCode" id="cb2"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" tabindex="-1"></a><span class="fu">library</span>(rstan)</span>
+<span id="cb2-2"><a href="#cb2-2" tabindex="-1"></a></span>
+<span id="cb2-3"><a href="#cb2-3" tabindex="-1"></a><span class="fu">example</span>(stan_model, <span class="at">package =</span> <span class="st">&quot;rstan&quot;</span>, <span class="at">run.dontrun =</span> <span class="cn">TRUE</span>)</span></code></pre></div>
+</div>
+<div id="cmdstanr" class="section level3">
+<h3>cmdstanr</h3>
+<p>The cmdstanr package is not yet available on CRAN. The beta release
+can be installed from the <em>Stan</em> R package repository:</p>
+<div class="sourceCode" id="cb3"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" tabindex="-1"></a><span class="fu">install.packages</span>(<span class="st">&quot;cmdstanr&quot;</span>,</span>
+<span id="cb3-2"><a href="#cb3-2" tabindex="-1"></a>                 <span class="at">repos =</span> <span class="fu">c</span>(<span class="st">&quot;https://mc-stan.org/r-packages/&quot;</span>,</span>
+<span id="cb3-3"><a href="#cb3-3" tabindex="-1"></a>                           <span class="fu">getOption</span>(<span class="st">&quot;repos&quot;</span>)))</span></code></pre></div>
+<p>Or the development version can be installed from <a href="https://github.com/stan-dev/cmdstanr">GitHub</a>:</p>
+<div class="sourceCode" id="cb4"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" tabindex="-1"></a><span class="co"># install.packages(&quot;remotes&quot;)</span></span>
+<span id="cb4-2"><a href="#cb4-2" tabindex="-1"></a>remotes<span class="sc">::</span><span class="fu">install_github</span>(<span class="st">&quot;stan-dev/cmdstanr&quot;</span>)</span></code></pre></div>
+<p>The cmdstanr package requires a suitable C++ toolchain. Requirements
+and instructions for ensuring your toolchain is properly set up are
+described in the <a href="https://mc-stan.org/docs/cmdstan-guide/cmdstan-installation.html#cpp-toolchain">CmdStan
+User Guide</a>.</p>
+<p>You can verify that the C++ toolchain is set up correctly with:</p>
+<div class="sourceCode" id="cb5"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" tabindex="-1"></a><span class="fu">library</span>(cmdstanr)</span>
+<span id="cb5-2"><a href="#cb5-2" tabindex="-1"></a></span>
+<span id="cb5-3"><a href="#cb5-3" tabindex="-1"></a><span class="fu">check_cmdstan_toolchain</span>()</span></code></pre></div>
+<p>Finally, cmdstanr requires that CmdStan (the shell interface to
+<em>Stan</em>). Once the toolchain is properly set up, CmdStan can be
+installed with:</p>
+<div class="sourceCode" id="cb6"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" tabindex="-1"></a><span class="fu">install_cmdstan</span>(<span class="at">cores =</span> <span class="dv">2</span>)</span></code></pre></div>
+<p>For additional installation help, getting the <a href="https://mc-stan.org/cmdstanr/articles/cmdstanr.html">Getting
+Started with CmdStanR</a> vignette.</p>
+</div>
+<div id="measr" class="section level3">
+<h3>measr</h3>
+<p>Once rstan and/or cmdstanr have been installed, we are ready to
+install measr. The released version of measr can be installed directly
+from CRAN:</p>
+<div class="sourceCode" id="cb7"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" tabindex="-1"></a><span class="fu">install.packages</span>(<span class="st">&quot;measr&quot;</span>)</span></code></pre></div>
+<p>Or, the development version can be installed from <a href="https://github.com/wjakethompson/measr">GitHub</a>:</p>
+<div class="sourceCode" id="cb8"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1" tabindex="-1"></a><span class="co"># install.packages(&quot;remotes&quot;)</span></span>
+<span id="cb8-2"><a href="#cb8-2" tabindex="-1"></a>remotes<span class="sc">::</span><span class="fu">install_github</span>(<span class="st">&quot;wjakethompson/measr&quot;</span>)</span></code></pre></div>
+<p>Once everything has been installed, we’re ready to start estimating
+and evaluating our DCMs.</p>
+<div class="sourceCode" id="cb9"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" tabindex="-1"></a><span class="fu">library</span>(measr)</span></code></pre></div>
+</div>
+</div>
 <div id="model-estimation" class="section level2">
 <h2>Model Estimation</h2>
 <p>To illustrate, we’ll fit a loglinear cognitive diagnostic model
-(LCDM) to an assessment of English language proficiency <span class="citation">(see <a href="#ref-templin2013">Templin &amp; Hoffman,
-2013</a>)</span>. There are many different subtypes of DCMs that make
-different assumptions about how the attributes relate to each other. The
-LCDM is a general model that makes very few assumptions about the
-compensatory nature of the relationships between attributes. For details
-on the LCDM, see <span class="citation">Henson &amp; Templin (<a href="#ref-henson2019">2019</a>)</span>.</p>
+(LCDM) to an assessment of English language proficiency <span class="citation">(see <a href="#ref-templin-emip-2013">Templin &amp;
+Hoffman, 2013</a>)</span>. There are many different subtypes of DCMs
+that make different assumptions about how the attributes relate to each
+other. The LCDM is a general model that makes very few assumptions about
+the compensatory nature of the relationships between attributes. For
+details on the LCDM, see <span class="citation">Henson &amp; Templin (<a href="#ref-lcdm-handbook">2019</a>)</span>.</p>
 <p>The data set we’re using contains 29 items that together measure
 three attributes: morphosyntactic rules, cohesive rules, and lexical
 rules. The Q-matrix defines which attributes are measured by each item.
 For example, item E1 measures morphosyntactic and cohesive rules. The
 data is further described in <code>?ecpe</code>.</p>
-<div class="sourceCode" id="cb2"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" tabindex="-1"></a>ecpe_data</span>
-<span id="cb2-2"><a href="#cb2-2" tabindex="-1"></a><span class="co">#&gt; # A tibble: 2,922 × 29</span></span>
-<span id="cb2-3"><a href="#cb2-3" tabindex="-1"></a><span class="co">#&gt;    resp_id    E1    E2    E3    E4    E5    E6    E7    E8    E9   E10   E11</span></span>
-<span id="cb2-4"><a href="#cb2-4" tabindex="-1"></a><span class="co">#&gt;      &lt;int&gt; &lt;int&gt; &lt;int&gt; &lt;int&gt; &lt;int&gt; &lt;int&gt; &lt;int&gt; &lt;int&gt; &lt;int&gt; &lt;int&gt; &lt;int&gt; &lt;int&gt;</span></span>
-<span id="cb2-5"><a href="#cb2-5" tabindex="-1"></a><span class="co">#&gt;  1       1     1     1     1     0     1     1     1     1     1     1     1</span></span>
-<span id="cb2-6"><a href="#cb2-6" tabindex="-1"></a><span class="co">#&gt;  2       2     1     1     1     1     1     1     1     1     1     1     1</span></span>
-<span id="cb2-7"><a href="#cb2-7" tabindex="-1"></a><span class="co">#&gt;  3       3     1     1     1     1     1     1     0     1     1     1     1</span></span>
-<span id="cb2-8"><a href="#cb2-8" tabindex="-1"></a><span class="co">#&gt;  4       4     1     1     1     1     1     1     1     1     1     1     1</span></span>
-<span id="cb2-9"><a href="#cb2-9" tabindex="-1"></a><span class="co">#&gt;  5       5     1     1     1     1     1     1     1     1     1     1     1</span></span>
-<span id="cb2-10"><a href="#cb2-10" tabindex="-1"></a><span class="co">#&gt;  6       6     1     1     1     1     1     1     1     1     1     1     1</span></span>
-<span id="cb2-11"><a href="#cb2-11" tabindex="-1"></a><span class="co">#&gt;  7       7     1     1     1     1     1     1     1     1     1     1     1</span></span>
-<span id="cb2-12"><a href="#cb2-12" tabindex="-1"></a><span class="co">#&gt;  8       8     0     1     1     1     1     1     0     1     1     1     0</span></span>
-<span id="cb2-13"><a href="#cb2-13" tabindex="-1"></a><span class="co">#&gt;  9       9     1     1     1     1     1     1     1     1     1     1     1</span></span>
-<span id="cb2-14"><a href="#cb2-14" tabindex="-1"></a><span class="co">#&gt; 10      10     1     1     1     1     0     0     1     1     1     1     1</span></span>
-<span id="cb2-15"><a href="#cb2-15" tabindex="-1"></a><span class="co">#&gt; # ℹ 2,912 more rows</span></span>
-<span id="cb2-16"><a href="#cb2-16" tabindex="-1"></a><span class="co">#&gt; # ℹ 17 more variables: E12 &lt;int&gt;, E13 &lt;int&gt;, E14 &lt;int&gt;, E15 &lt;int&gt;, E16 &lt;int&gt;,</span></span>
-<span id="cb2-17"><a href="#cb2-17" tabindex="-1"></a><span class="co">#&gt; #   E17 &lt;int&gt;, E18 &lt;int&gt;, E19 &lt;int&gt;, E20 &lt;int&gt;, E21 &lt;int&gt;, E22 &lt;int&gt;,</span></span>
-<span id="cb2-18"><a href="#cb2-18" tabindex="-1"></a><span class="co">#&gt; #   E23 &lt;int&gt;, E24 &lt;int&gt;, E25 &lt;int&gt;, E26 &lt;int&gt;, E27 &lt;int&gt;, E28 &lt;int&gt;</span></span>
-<span id="cb2-19"><a href="#cb2-19" tabindex="-1"></a></span>
-<span id="cb2-20"><a href="#cb2-20" tabindex="-1"></a>ecpe_qmatrix</span>
-<span id="cb2-21"><a href="#cb2-21" tabindex="-1"></a><span class="co">#&gt; # A tibble: 28 × 4</span></span>
-<span id="cb2-22"><a href="#cb2-22" tabindex="-1"></a><span class="co">#&gt;    item_id morphosyntactic cohesive lexical</span></span>
-<span id="cb2-23"><a href="#cb2-23" tabindex="-1"></a><span class="co">#&gt;    &lt;chr&gt;             &lt;int&gt;    &lt;int&gt;   &lt;int&gt;</span></span>
-<span id="cb2-24"><a href="#cb2-24" tabindex="-1"></a><span class="co">#&gt;  1 E1                    1        1       0</span></span>
-<span id="cb2-25"><a href="#cb2-25" tabindex="-1"></a><span class="co">#&gt;  2 E2                    0        1       0</span></span>
-<span id="cb2-26"><a href="#cb2-26" tabindex="-1"></a><span class="co">#&gt;  3 E3                    1        0       1</span></span>
-<span id="cb2-27"><a href="#cb2-27" tabindex="-1"></a><span class="co">#&gt;  4 E4                    0        0       1</span></span>
-<span id="cb2-28"><a href="#cb2-28" tabindex="-1"></a><span class="co">#&gt;  5 E5                    0        0       1</span></span>
-<span id="cb2-29"><a href="#cb2-29" tabindex="-1"></a><span class="co">#&gt;  6 E6                    0        0       1</span></span>
-<span id="cb2-30"><a href="#cb2-30" tabindex="-1"></a><span class="co">#&gt;  7 E7                    1        0       1</span></span>
-<span id="cb2-31"><a href="#cb2-31" tabindex="-1"></a><span class="co">#&gt;  8 E8                    0        1       0</span></span>
-<span id="cb2-32"><a href="#cb2-32" tabindex="-1"></a><span class="co">#&gt;  9 E9                    0        0       1</span></span>
-<span id="cb2-33"><a href="#cb2-33" tabindex="-1"></a><span class="co">#&gt; 10 E10                   1        0       0</span></span>
-<span id="cb2-34"><a href="#cb2-34" tabindex="-1"></a><span class="co">#&gt; # ℹ 18 more rows</span></span></code></pre></div>
+<div class="sourceCode" id="cb10"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb10-1"><a href="#cb10-1" tabindex="-1"></a>ecpe_data</span>
+<span id="cb10-2"><a href="#cb10-2" tabindex="-1"></a><span class="co">#&gt; # A tibble: 2,922 × 29</span></span>
+<span id="cb10-3"><a href="#cb10-3" tabindex="-1"></a><span class="co">#&gt;    resp_id    E1    E2    E3    E4    E5    E6    E7    E8    E9   E10   E11</span></span>
+<span id="cb10-4"><a href="#cb10-4" tabindex="-1"></a><span class="co">#&gt;      &lt;int&gt; &lt;int&gt; &lt;int&gt; &lt;int&gt; &lt;int&gt; &lt;int&gt; &lt;int&gt; &lt;int&gt; &lt;int&gt; &lt;int&gt; &lt;int&gt; &lt;int&gt;</span></span>
+<span id="cb10-5"><a href="#cb10-5" tabindex="-1"></a><span class="co">#&gt;  1       1     1     1     1     0     1     1     1     1     1     1     1</span></span>
+<span id="cb10-6"><a href="#cb10-6" tabindex="-1"></a><span class="co">#&gt;  2       2     1     1     1     1     1     1     1     1     1     1     1</span></span>
+<span id="cb10-7"><a href="#cb10-7" tabindex="-1"></a><span class="co">#&gt;  3       3     1     1     1     1     1     1     0     1     1     1     1</span></span>
+<span id="cb10-8"><a href="#cb10-8" tabindex="-1"></a><span class="co">#&gt;  4       4     1     1     1     1     1     1     1     1     1     1     1</span></span>
+<span id="cb10-9"><a href="#cb10-9" tabindex="-1"></a><span class="co">#&gt;  5       5     1     1     1     1     1     1     1     1     1     1     1</span></span>
+<span id="cb10-10"><a href="#cb10-10" tabindex="-1"></a><span class="co">#&gt;  6       6     1     1     1     1     1     1     1     1     1     1     1</span></span>
+<span id="cb10-11"><a href="#cb10-11" tabindex="-1"></a><span class="co">#&gt;  7       7     1     1     1     1     1     1     1     1     1     1     1</span></span>
+<span id="cb10-12"><a href="#cb10-12" tabindex="-1"></a><span class="co">#&gt;  8       8     0     1     1     1     1     1     0     1     1     1     0</span></span>
+<span id="cb10-13"><a href="#cb10-13" tabindex="-1"></a><span class="co">#&gt;  9       9     1     1     1     1     1     1     1     1     1     1     1</span></span>
+<span id="cb10-14"><a href="#cb10-14" tabindex="-1"></a><span class="co">#&gt; 10      10     1     1     1     1     0     0     1     1     1     1     1</span></span>
+<span id="cb10-15"><a href="#cb10-15" tabindex="-1"></a><span class="co">#&gt; # ℹ 2,912 more rows</span></span>
+<span id="cb10-16"><a href="#cb10-16" tabindex="-1"></a><span class="co">#&gt; # ℹ 17 more variables: E12 &lt;int&gt;, E13 &lt;int&gt;, E14 &lt;int&gt;, E15 &lt;int&gt;, E16 &lt;int&gt;,</span></span>
+<span id="cb10-17"><a href="#cb10-17" tabindex="-1"></a><span class="co">#&gt; #   E17 &lt;int&gt;, E18 &lt;int&gt;, E19 &lt;int&gt;, E20 &lt;int&gt;, E21 &lt;int&gt;, E22 &lt;int&gt;,</span></span>
+<span id="cb10-18"><a href="#cb10-18" tabindex="-1"></a><span class="co">#&gt; #   E23 &lt;int&gt;, E24 &lt;int&gt;, E25 &lt;int&gt;, E26 &lt;int&gt;, E27 &lt;int&gt;, E28 &lt;int&gt;</span></span>
+<span id="cb10-19"><a href="#cb10-19" tabindex="-1"></a></span>
+<span id="cb10-20"><a href="#cb10-20" tabindex="-1"></a>ecpe_qmatrix</span>
+<span id="cb10-21"><a href="#cb10-21" tabindex="-1"></a><span class="co">#&gt; # A tibble: 28 × 4</span></span>
+<span id="cb10-22"><a href="#cb10-22" tabindex="-1"></a><span class="co">#&gt;    item_id morphosyntactic cohesive lexical</span></span>
+<span id="cb10-23"><a href="#cb10-23" tabindex="-1"></a><span class="co">#&gt;    &lt;chr&gt;             &lt;int&gt;    &lt;int&gt;   &lt;int&gt;</span></span>
+<span id="cb10-24"><a href="#cb10-24" tabindex="-1"></a><span class="co">#&gt;  1 E1                    1        1       0</span></span>
+<span id="cb10-25"><a href="#cb10-25" tabindex="-1"></a><span class="co">#&gt;  2 E2                    0        1       0</span></span>
+<span id="cb10-26"><a href="#cb10-26" tabindex="-1"></a><span class="co">#&gt;  3 E3                    1        0       1</span></span>
+<span id="cb10-27"><a href="#cb10-27" tabindex="-1"></a><span class="co">#&gt;  4 E4                    0        0       1</span></span>
+<span id="cb10-28"><a href="#cb10-28" tabindex="-1"></a><span class="co">#&gt;  5 E5                    0        0       1</span></span>
+<span id="cb10-29"><a href="#cb10-29" tabindex="-1"></a><span class="co">#&gt;  6 E6                    0        0       1</span></span>
+<span id="cb10-30"><a href="#cb10-30" tabindex="-1"></a><span class="co">#&gt;  7 E7                    1        0       1</span></span>
+<span id="cb10-31"><a href="#cb10-31" tabindex="-1"></a><span class="co">#&gt;  8 E8                    0        1       0</span></span>
+<span id="cb10-32"><a href="#cb10-32" tabindex="-1"></a><span class="co">#&gt;  9 E9                    0        0       1</span></span>
+<span id="cb10-33"><a href="#cb10-33" tabindex="-1"></a><span class="co">#&gt; 10 E10                   1        0       0</span></span>
+<span id="cb10-34"><a href="#cb10-34" tabindex="-1"></a><span class="co">#&gt; # ℹ 18 more rows</span></span></code></pre></div>
 <p>We can estimate the LCDM using the <code>measr_dcm()</code> function.
 We specify the data set, the Q-matrix, and the column names of the
 respondent and item identifiers in each (if they exist). Finally, we add
@@ -439,9 +499,9 @@ estimate. As previously discussed, we’re estimating an LCDM in this
 example. For more details and options for customizing the model
 specification and estimation, see the <a href="https://measr.info/articles/model-estimation.html">model
 estimation article</a> on the measr website.</p>
-<div class="sourceCode" id="cb3"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" tabindex="-1"></a>ecpe_lcdm <span class="ot">&lt;-</span> <span class="fu">measr_dcm</span>(<span class="at">data =</span> ecpe_data, <span class="at">qmatrix =</span> ecpe_qmatrix,</span>
-<span id="cb3-2"><a href="#cb3-2" tabindex="-1"></a>                       <span class="at">resp_id =</span> <span class="st">&quot;resp_id&quot;</span>, <span class="at">item_id =</span> <span class="st">&quot;item_id&quot;</span>,</span>
-<span id="cb3-3"><a href="#cb3-3" tabindex="-1"></a>                       <span class="at">method =</span> <span class="st">&quot;optim&quot;</span>, <span class="at">type =</span> <span class="st">&quot;lcdm&quot;</span>)</span></code></pre></div>
+<div class="sourceCode" id="cb11"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb11-1"><a href="#cb11-1" tabindex="-1"></a>ecpe_lcdm <span class="ot">&lt;-</span> <span class="fu">measr_dcm</span>(<span class="at">data =</span> ecpe_data, <span class="at">qmatrix =</span> ecpe_qmatrix,</span>
+<span id="cb11-2"><a href="#cb11-2" tabindex="-1"></a>                       <span class="at">resp_id =</span> <span class="st">&quot;resp_id&quot;</span>, <span class="at">item_id =</span> <span class="st">&quot;item_id&quot;</span>,</span>
+<span id="cb11-3"><a href="#cb11-3" tabindex="-1"></a>                       <span class="at">method =</span> <span class="st">&quot;optim&quot;</span>, <span class="at">type =</span> <span class="st">&quot;lcdm&quot;</span>)</span></code></pre></div>
 <p>Once the model as estimated, we can use <code>measr_extract()</code>
 to pull out the probability that each respondent is proficient on each
 of the attributes. For example, the first respondent has probabilities
@@ -449,22 +509,22 @@ near 1 for all attributes, indicating a high degree of confidence that
 they are proficient in all attributes. On the other hand, respondent 8
 has relatively low probabilities for morphosyntactic and cohesive
 attributes, and is likely only proficient in lexical rules.</p>
-<div class="sourceCode" id="cb4"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" tabindex="-1"></a>ecpe_lcdm <span class="ot">&lt;-</span> <span class="fu">add_respondent_estimates</span>(ecpe_lcdm)</span>
-<span id="cb4-2"><a href="#cb4-2" tabindex="-1"></a><span class="fu">measr_extract</span>(ecpe_lcdm, <span class="st">&quot;attribute_prob&quot;</span>)</span>
-<span id="cb4-3"><a href="#cb4-3" tabindex="-1"></a><span class="co">#&gt; # A tibble: 2,922 × 4</span></span>
-<span id="cb4-4"><a href="#cb4-4" tabindex="-1"></a><span class="co">#&gt;    resp_id morphosyntactic cohesive lexical</span></span>
-<span id="cb4-5"><a href="#cb4-5" tabindex="-1"></a><span class="co">#&gt;    &lt;fct&gt;             &lt;dbl&gt;    &lt;dbl&gt;   &lt;dbl&gt;</span></span>
-<span id="cb4-6"><a href="#cb4-6" tabindex="-1"></a><span class="co">#&gt;  1 1               0.997      0.962   1.00 </span></span>
-<span id="cb4-7"><a href="#cb4-7" tabindex="-1"></a><span class="co">#&gt;  2 2               0.995      0.900   1.00 </span></span>
-<span id="cb4-8"><a href="#cb4-8" tabindex="-1"></a><span class="co">#&gt;  3 3               0.985      0.990   1.00 </span></span>
-<span id="cb4-9"><a href="#cb4-9" tabindex="-1"></a><span class="co">#&gt;  4 4               0.998      0.991   1.00 </span></span>
-<span id="cb4-10"><a href="#cb4-10" tabindex="-1"></a><span class="co">#&gt;  5 5               0.989      0.985   0.965</span></span>
-<span id="cb4-11"><a href="#cb4-11" tabindex="-1"></a><span class="co">#&gt;  6 6               0.993      0.991   1.00 </span></span>
-<span id="cb4-12"><a href="#cb4-12" tabindex="-1"></a><span class="co">#&gt;  7 7               0.993      0.991   1.00 </span></span>
-<span id="cb4-13"><a href="#cb4-13" tabindex="-1"></a><span class="co">#&gt;  8 8               0.00411    0.471   0.964</span></span>
-<span id="cb4-14"><a href="#cb4-14" tabindex="-1"></a><span class="co">#&gt;  9 9               0.949      0.986   0.999</span></span>
-<span id="cb4-15"><a href="#cb4-15" tabindex="-1"></a><span class="co">#&gt; 10 10              0.552      0.142   0.111</span></span>
-<span id="cb4-16"><a href="#cb4-16" tabindex="-1"></a><span class="co">#&gt; # ℹ 2,912 more rows</span></span></code></pre></div>
+<div class="sourceCode" id="cb12"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb12-1"><a href="#cb12-1" tabindex="-1"></a>ecpe_lcdm <span class="ot">&lt;-</span> <span class="fu">add_respondent_estimates</span>(ecpe_lcdm)</span>
+<span id="cb12-2"><a href="#cb12-2" tabindex="-1"></a><span class="fu">measr_extract</span>(ecpe_lcdm, <span class="st">&quot;attribute_prob&quot;</span>)</span>
+<span id="cb12-3"><a href="#cb12-3" tabindex="-1"></a><span class="co">#&gt; # A tibble: 2,922 × 4</span></span>
+<span id="cb12-4"><a href="#cb12-4" tabindex="-1"></a><span class="co">#&gt;    resp_id morphosyntactic cohesive lexical</span></span>
+<span id="cb12-5"><a href="#cb12-5" tabindex="-1"></a><span class="co">#&gt;    &lt;fct&gt;             &lt;dbl&gt;    &lt;dbl&gt;   &lt;dbl&gt;</span></span>
+<span id="cb12-6"><a href="#cb12-6" tabindex="-1"></a><span class="co">#&gt;  1 1               0.997      0.962   1.00 </span></span>
+<span id="cb12-7"><a href="#cb12-7" tabindex="-1"></a><span class="co">#&gt;  2 2               0.995      0.900   1.00 </span></span>
+<span id="cb12-8"><a href="#cb12-8" tabindex="-1"></a><span class="co">#&gt;  3 3               0.985      0.990   1.00 </span></span>
+<span id="cb12-9"><a href="#cb12-9" tabindex="-1"></a><span class="co">#&gt;  4 4               0.998      0.991   1.00 </span></span>
+<span id="cb12-10"><a href="#cb12-10" tabindex="-1"></a><span class="co">#&gt;  5 5               0.989      0.985   0.965</span></span>
+<span id="cb12-11"><a href="#cb12-11" tabindex="-1"></a><span class="co">#&gt;  6 6               0.993      0.991   1.00 </span></span>
+<span id="cb12-12"><a href="#cb12-12" tabindex="-1"></a><span class="co">#&gt;  7 7               0.993      0.991   1.00 </span></span>
+<span id="cb12-13"><a href="#cb12-13" tabindex="-1"></a><span class="co">#&gt;  8 8               0.00411    0.471   0.964</span></span>
+<span id="cb12-14"><a href="#cb12-14" tabindex="-1"></a><span class="co">#&gt;  9 9               0.949      0.986   0.999</span></span>
+<span id="cb12-15"><a href="#cb12-15" tabindex="-1"></a><span class="co">#&gt; 10 10              0.552      0.142   0.111</span></span>
+<span id="cb12-16"><a href="#cb12-16" tabindex="-1"></a><span class="co">#&gt; # ℹ 2,912 more rows</span></span></code></pre></div>
 </div>
 <div id="model-evaluation" class="section level2">
 <h2>Model Evaluation</h2>
@@ -481,20 +541,20 @@ indices, numbers close to 1 indicate a high level of classification
 accuracy or consistency. These numbers are not amazing, but overall look
 pretty good. For guidance on cutoff values for “good,” “fair,” etc.
 reliability, see <span class="citation">Johnson &amp; Sinharay (<a href="#ref-johnson2018">2018</a>)</span>.</p>
-<div class="sourceCode" id="cb5"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" tabindex="-1"></a>ecpe_lcdm <span class="ot">&lt;-</span> <span class="fu">add_reliability</span>(ecpe_lcdm)</span>
-<span id="cb5-2"><a href="#cb5-2" tabindex="-1"></a><span class="fu">measr_extract</span>(ecpe_lcdm, <span class="st">&quot;classification_reliability&quot;</span>)</span>
-<span id="cb5-3"><a href="#cb5-3" tabindex="-1"></a><span class="co">#&gt; # A tibble: 3 × 3</span></span>
-<span id="cb5-4"><a href="#cb5-4" tabindex="-1"></a><span class="co">#&gt;   attribute       accuracy consistency</span></span>
-<span id="cb5-5"><a href="#cb5-5" tabindex="-1"></a><span class="co">#&gt;   &lt;chr&gt;              &lt;dbl&gt;       &lt;dbl&gt;</span></span>
-<span id="cb5-6"><a href="#cb5-6" tabindex="-1"></a><span class="co">#&gt; 1 morphosyntactic    0.897       0.835</span></span>
-<span id="cb5-7"><a href="#cb5-7" tabindex="-1"></a><span class="co">#&gt; 2 cohesive           0.858       0.809</span></span>
-<span id="cb5-8"><a href="#cb5-8" tabindex="-1"></a><span class="co">#&gt; 3 lexical            0.918       0.858</span></span></code></pre></div>
+<div class="sourceCode" id="cb13"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb13-1"><a href="#cb13-1" tabindex="-1"></a>ecpe_lcdm <span class="ot">&lt;-</span> <span class="fu">add_reliability</span>(ecpe_lcdm)</span>
+<span id="cb13-2"><a href="#cb13-2" tabindex="-1"></a><span class="fu">measr_extract</span>(ecpe_lcdm, <span class="st">&quot;classification_reliability&quot;</span>)</span>
+<span id="cb13-3"><a href="#cb13-3" tabindex="-1"></a><span class="co">#&gt; # A tibble: 3 × 3</span></span>
+<span id="cb13-4"><a href="#cb13-4" tabindex="-1"></a><span class="co">#&gt;   attribute       accuracy consistency</span></span>
+<span id="cb13-5"><a href="#cb13-5" tabindex="-1"></a><span class="co">#&gt;   &lt;chr&gt;              &lt;dbl&gt;       &lt;dbl&gt;</span></span>
+<span id="cb13-6"><a href="#cb13-6" tabindex="-1"></a><span class="co">#&gt; 1 morphosyntactic    0.897       0.835</span></span>
+<span id="cb13-7"><a href="#cb13-7" tabindex="-1"></a><span class="co">#&gt; 2 cohesive           0.858       0.809</span></span>
+<span id="cb13-8"><a href="#cb13-8" tabindex="-1"></a><span class="co">#&gt; 3 lexical            0.918       0.858</span></span></code></pre></div>
 </div>
 <div id="references" class="section level2 unnumbered">
 <h2 class="unnumbered">References</h2>
-<div id="refs" class="references csl-bib-body hanging-indent" line-spacing="2">
-<div id="ref-henson2019" class="csl-entry">
-Henson, R., &amp; Templin, J. L. (2019). Loglinear cognitive diagnostic
+<div id="refs" class="references csl-bib-body hanging-indent" entry-spacing="0" line-spacing="2">
+<div id="ref-lcdm-handbook" class="csl-entry">
+Henson, R., &amp; Templin, J. (2019). Loglinear cognitive diagnostic
 model (<span>LCDM</span>). In M. von Davier &amp; Y.-S. Lee (Eds.),
 <em>Handbook of <span>Diagnostic Classification Models</span></em> (pp.
 171–185). <span>Springer International Publishing</span>. <a href="https://doi.org/10.1007/978-3-030-05584-4_8">https://doi.org/10.1007/978-3-030-05584-4_8</a>
@@ -505,9 +565,9 @@ assess attribute-level classification accuracy and consistency for
 cognitive diagnostic assessments. <em>Journal of Educational
 Measurement</em>, <em>55</em>(4), 635–664. <a href="https://doi.org/10.1111/jedm.12196">https://doi.org/10.1111/jedm.12196</a>
 </div>
-<div id="ref-templin2013" class="csl-entry">
+<div id="ref-templin-emip-2013" class="csl-entry">
 Templin, J., &amp; Hoffman, L. (2013). Obtaining diagnostic
-classification model estimates using mplus. <em>Educational Measurement:
+classification model estimates using Mplus. <em>Educational Measurement:
 Issues and Practice</em>, <em>32</em>(2), 37–50. <a href="https://doi.org/10.1111/emip.12010">https://doi.org/10.1111/emip.12010</a>
 </div>
 </div>

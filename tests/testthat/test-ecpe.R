@@ -1,18 +1,22 @@
-if (!identical(Sys.getenv("NOT_CRAN"), "true")) return()
-
-out <- capture.output(
-  suppressMessages(
-    cmds_ecpe_lcdm <- measr_dcm(
-      data = ecpe_data, missing = NA, qmatrix = ecpe_qmatrix,
-      resp_id = "resp_id", item_id = "item_id", type = "lcdm",
-      method = "optim", seed = 63277, backend = "cmdstanr",
-      prior = c(prior(uniform(-15, 15), class = "intercept"),
-                prior(uniform(0, 15), class = "maineffect"),
-                prior(uniform(-15, 15), class = "interaction")))
+if (!identical(Sys.getenv("NOT_CRAN"), "true")) {
+  skip("No MCMC on CRAN")
+} else {
+  out <- capture.output(
+    suppressMessages(
+      cmds_ecpe_lcdm <- measr_dcm(
+        data = ecpe_data, missing = NA, qmatrix = ecpe_qmatrix,
+        resp_id = "resp_id", item_id = "item_id", type = "lcdm",
+        method = "optim", seed = 63277, backend = "cmdstanr",
+        prior = c(prior(uniform(-15, 15), class = "intercept"),
+                  prior(uniform(0, 15), class = "maineffect"),
+                  prior(uniform(-15, 15), class = "interaction")))
+    )
   )
-)
+}
 
 test_that("lcdm model works for ecpe", {
+  skip_on_cran()
+
   expect_s3_class(cmds_ecpe_lcdm, "measrfit")
   expect_s3_class(cmds_ecpe_lcdm, "measrdcm")
   expect_equal(names(cmds_ecpe_lcdm),
@@ -64,6 +68,8 @@ test_that("lcdm model works for ecpe", {
 })
 
 test_that("extract ecpe", {
+  skip_on_cran()
+
   lcdm_param <- measr_extract(cmds_ecpe_lcdm, "item_param")
   all_param <- get_parameters(ecpe_qmatrix, item_id = "item_id",
                               type = "lcdm") %>%
@@ -72,8 +78,7 @@ test_that("extract ecpe", {
   expect_equal(nrow(lcdm_param), nrow(all_param))
   expect_equal(colnames(lcdm_param),
                c("item_id", "class", "attributes", "coef", "estimate"))
-  expect_equal(as.character(lcdm_param$item_id),
-               paste0("E", all_param$item_id))
+  expect_equal(lcdm_param$item_id, all_param$item_id)
   expect_equal(lcdm_param$class, all_param$class)
   expect_equal(lcdm_param$attributes, all_param$attributes)
   expect_equal(lcdm_param$coef, all_param$coef)
@@ -106,8 +111,10 @@ test_that("extract ecpe", {
 })
 
 test_that("ecpe probabilities are accurate", {
+  skip_on_cran()
+
   ecpe_preds <- predict(cmds_ecpe_lcdm, newdata = ecpe_data,
-                        resp_id = "resp_id", summary = TRUE)
+                        resp_id = "resp_id")
 
   # dimensions are correct
   expect_equal(names(ecpe_preds), c("class_probabilities",
@@ -143,6 +150,9 @@ test_that("ecpe probabilities are accurate", {
                  tidyr::pivot_wider(names_from = "attribute",
                                     values_from = "probability"))
 
+  check_preds <- predict(cmds_ecpe_lcdm)
+  expect_equal(check_preds, cmds_ecpe_lcdm$respondent_estimates)
+
   measr_class <- ecpe_preds$class_probabilities %>%
     dplyr::select("resp_id", "class", "probability") %>%
     tidyr::pivot_wider(names_from = "class", values_from = "probability") %>%
@@ -174,6 +184,8 @@ test_that("ecpe probabilities are accurate", {
 })
 
 test_that("ecpe reliability", {
+  skip_on_cran()
+
   ecpe_reli <- reliability(cmds_ecpe_lcdm)
 
   # list naming
@@ -245,6 +257,8 @@ test_that("ecpe reliability", {
 })
 
 test_that("m2 calculation is correct", {
+  skip_on_cran()
+
   m2 <- fit_m2(cmds_ecpe_lcdm)
 
   expect_equal(m2$m2, 507.0756, tolerance = 0.1)
@@ -260,6 +274,8 @@ test_that("m2 calculation is correct", {
 })
 
 test_that("mcmc requirements error", {
+  skip_on_cran()
+
   err <- rlang::catch_cnd(add_fit(cmds_ecpe_lcdm, method = "ppmc"))
   expect_s3_class(err, "error_bad_method")
   expect_match(err$message, "`method = \"mcmc\"`")
