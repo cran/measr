@@ -14,10 +14,9 @@ version](https://www.r-pkg.org/badges/version/measr)](https://cran.r-project.org
 [![Package
 downloads](https://cranlogs.r-pkg.org/badges/grand-total/measr)](https://cran.r-project.org/package=measr)
 [![DOI](https://joss.theoj.org/papers/10.21105/joss.05742/status.svg)](https://doi.org/10.21105/joss.05742)</br>
-[![R-CMD-check](https://github.com/wjakethompson/measr/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/wjakethompson/measr/actions/workflows/R-CMD-check.yaml)
-[![codecov](https://codecov.io/gh/wjakethompson/measr/branch/main/graph/badge.svg?token=JtF3xtGt6g)](https://app.codecov.io/gh/wjakethompson/measr)
-[![Netlify
-Status](https://api.netlify.com/api/v1/badges/b82caf01-0611-4f8b-bbca-5b89b5a80791/deploy-status)](https://app.netlify.com/sites/measr/deploys)</br>
+[![R-CMD-check](https://github.com/r-dcm/measr/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/r-dcm/measr/actions/workflows/R-CMD-check.yaml)
+[![codecov](https://codecov.io/gh/r-dcm/measr/graph/badge.svg?token=vCKHSEn66n)](https://app.codecov.io/gh/r-dcm/measr)
+[![pages-build-deployment](https://github.com/r-dcm/measr/actions/workflows/pages/pages-build-deployment/badge.svg)](https://github.com/r-dcm/measr/actions/workflows/pages/pages-build-deployment)</br>
 [![Signed
 by](https://img.shields.io/badge/Keybase-Verified-brightgreen.svg)](https://keybase.io/wjakethompson)
 ![License](https://img.shields.io/badge/License-GPL_v3-blue.svg)
@@ -49,11 +48,11 @@ install.packages("measr")
 ```
 
 To install the development version of measr from
-[GitHub](https://github.com/wjakethompson/measr) use:
+[GitHub](https://github.com/r-dcm/measr) use:
 
 ``` r
 # install.packages("remotes")
-remotes::install_github("wjakethompson/measr")
+remotes::install_github("r-dcm/measr")
 ```
 
 Because measr is based on Stan, a C++ compiler is required. For Windows,
@@ -65,52 +64,68 @@ page](https://github.com/stan-dev/rstan/wiki/RStan-Getting-Started).
 
 ## Usage
 
-We can estimate a DCM using `measr_dcm()`. This function only requires a
-data set of item responses and a Q-matrix defining which attributes are
-measured by each item. We also identify any respondent or item
-identifier columns. Other arguments can be specified to customize the
-type of model to estimates (see `?measr_dcm()`).
+We can define a DCM using `dcm_specify()`. This function requires a
+Q-matrix defining which attributes are measured by each item. We also
+identify any item identifier columns. Other arguments can be specified
+to customize the type of model to estimate (e.g., type of measurement or
+structural model; see `?dcmstan::dcm_specify()`). We can then estimate
+our specified DCM using `dcm_estimate()`. We supply our specification
+and our data set, along with any respondent identifiers. As with
+`dcm_specify()`, other arguments can be specified to customize the model
+estimation process (e.g., estimation backend and method; see
+`?dcm_estimate()`).
 
-To demonstrate measr’s functionality, example data sets are included.
-Here we use the Examination of Certificate of Proficiency in English
-(ECPE; [Templin & Hoffman, 2013](https://doi.org/10.1111/emip.12010))
-data (see `?ecpe` for details). Note that by default, measr uses a full
+To demonstrate measr’s functionality, example data sets are available in
+the [dcmdata](https://dcmdata.r-dcm.org) package. Here we use the
+Examination of Certificate of Proficiency in English (ECPE; [Templin &
+Hoffman, 2013](https://doi.org/10.1111/emip.12010)) data (see
+`?dcmdata::ecpe` for details). Note that by default, measr uses a full
 Markov chain Monte Carlo (MCMC) estimation with Stan, which can be time
-and computationally intensive. For a quicker estimation, we can use
+and computationally intensive. For a quicker estimation, we could use
 Stan’s optimizer instead of MCMC by adding `method = "optim"` to the
-function call. However, please not that some functionality will be lost
-when using the optimizer (e.g., the calculation of relative fit criteria
-requires the use of MCMC).
+function call. However, please note that some functionality will be lost
+when using the optimizer (e.g., the calculation of some model fit
+criteria requires the use of MCMC).
 
 ``` r
 library(measr)
 
-model <- measr_dcm(data = ecpe_data, resp_id = "resp_id",
-                   qmatrix = ecpe_qmatrix, item_id = "item_id")
+model_spec <- dcm_specify(dcmdata::dtmr_qmatrix, identifier = "item")
+
+model <- dcm_estimate(
+  dcm_spec = model_spec,
+  data = dcmdata::dtmr_data,
+  identifier = "id",
+  seed = 69385,
+  refresh = 0
+)
 ```
 
-Once a model has been estimated, we can then add and evaluate model fit.
-This can done through absolute model fit, relative model fit
-(information criteria), or reliability indices. Model parameters,
-respondent classifications, and results of the model fit analyses can
-then be extracted using `measr_extract()`.
+Once a model has been estimated, model parameters, respondent
+classifications, and results of the model fit analyses can then be
+extracted using `measr_extract()`.
 
 ``` r
-model <- add_fit(model, method = "m2")
-model <- add_criterion(model, criterion = "loo")
-model <- add_reliability(model)
-
 measr_extract(model, "m2")
 #> # A tibble: 1 × 3
-#>      m2    df     pval
-#>   <dbl> <int>    <dbl>
-#> 1  506.   325 4.37e-10
+#>      m2    df  pval
+#>   <dbl> <int> <dbl>
+#> 1  261.   293 0.909
+
+measr_extract(model, "classification_reliability")
+#> # A tibble: 4 × 3
+#>   attribute                 accuracy consistency
+#>   <chr>                        <dbl>       <dbl>
+#> 1 referent_units               0.928       0.878
+#> 2 partitioning_iterating       0.924       0.875
+#> 3 appropriateness              0.894       0.817
+#> 4 multiplicative_comparison    0.924       0.867
 ```
 
 ------------------------------------------------------------------------
 
 Contributions are welcome. To ensure a smooth process, please review the
-[Contributing Guide](https://measr.info/dev/CONTRIBUTING.html). Please
+[Contributing Guide](https://measr.r-dcm.org/CONTRIBUTING.html). Please
 note that the measr project is released with a [Contributor Code of
-Conduct](https://measr.info/CODE_OF_CONDUCT.html). By contributing to
-this project, you agree to abide by its terms.
+Conduct](https://measr.r-dcm.org/CODE_OF_CONDUCT.html). By contributing
+to this project, you agree to abide by its terms.

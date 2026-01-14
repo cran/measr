@@ -1,0 +1,106 @@
+test_that("errors for unknown", {
+  err <- rlang::catch_cnd(measr_extract(rstn_dina, "tswift"))
+  expect_s3_class(err, "rlang_error")
+  expect_match(err$message, "Cannot extract element .*\"tswift\".*")
+})
+
+test_that("extract item parameters", {
+  # dina -----------------------------------------------------------------------
+  dina_param <- measr_extract(rstn_dina, "item_param")
+  expect_equal(nrow(dina_param), 40)
+  expect_equal(
+    colnames(dina_param),
+    c("item_id", "type", "coefficient", "estimate")
+  )
+  expect_true(all(dina_param$item_id %in% q_matrix$item))
+  expect_equal(dina_param$type, rep(c("slip", "guess"), 20))
+  expect_equal(
+    dina_param$coefficient,
+    dcmstan::get_parameters(dina(), qmatrix = q_matrix[, -1]) |>
+      dplyr::pull(coefficient)
+  )
+  expect_s3_class(dina_param$estimate, "rvar")
+  expect_true(all(!is.na(dina_param$estimate)))
+
+  # dino -----------------------------------------------------------------------
+  dino_param <- measr_extract(rstn_dino, "item_param")
+  expect_equal(nrow(dino_param), 40)
+  expect_equal(
+    colnames(dino_param),
+    c("item", "type", "coefficient", "estimate")
+  )
+  expect_true(all(dino_param$item %in% q_matrix$item))
+  expect_equal(dino_param$type, rep(c("slip", "guess"), 20))
+  expect_equal(
+    dino_param$coefficient,
+    dcmstan::get_parameters(dino(), qmatrix = q_matrix, identifier = "item") |>
+      dplyr::pull(coefficient)
+  )
+  expect_s3_class(dino_param$estimate, "rvar")
+  expect_true(all(!is.na(dino_param$estimate)))
+})
+
+test_that("extract structural parameters", {
+  dina_param <- measr_extract(rstn_dina, "strc_param")
+  expect_equal(nrow(dina_param), 16)
+  expect_equal(dina_param$class, dplyr::pull(profile_labels(4), "class"))
+  expect_equal(
+    dplyr::select(dina_param, -c("class", "estimate")),
+    create_profiles(dina_spec)
+  )
+  expect_true(is.double(dina_param$estimate))
+  expect_true(all(!is.na(dina_param$estimate)))
+})
+
+test_that("extract base rates", {
+  dino_param <- measr_extract(rstn_dino, "attribute_base_rate")
+  expect_equal(nrow(dino_param), 1)
+  expect_equal(ncol(dino_param), ncol(q_matrix[, -1]))
+  expect_equal(colnames(dino_param), names(q_matrix[, -1]))
+  expect_true(all(vapply(dino_param, is.double, logical(1))))
+  expect_true(all(!is.na(dino_param[1, ])))
+})
+
+test_that("extract pi matrix", {
+  dina_pimat <- measr_extract(rstn_dina, "pi_matrix")
+  expect_equal(nrow(dina_pimat), 20)
+  expect_equal(ncol(dina_pimat), 17)
+  expect_equal(dina_pimat$item_id, q_matrix$item)
+  expect_equal(
+    colnames(dina_pimat)[-1],
+    dplyr::pull(profile_labels(4), "class")
+  )
+  expect_true(all(vapply(dina_pimat[, -1], is.double, logical(1))))
+  expect_true(all(vapply(dina_pimat[, -1], \(x) !any(is.na(x)), logical(1))))
+})
+
+test_that("extract model p-values", {
+  dino_pimat <- measr_extract(rstn_dino, "exp_pvalues")
+  expect_equal(nrow(dino_pimat), 20)
+  expect_equal(ncol(dino_pimat), 18)
+  expect_equal(dino_pimat$item, q_matrix$item)
+  expect_equal(
+    colnames(dino_pimat)[-1],
+    c(dplyr::pull(profile_labels(4), "class"), "overall")
+  )
+  expect_true(all(vapply(dino_pimat[, -1], is.double, logical(1))))
+  expect_true(all(vapply(dino_pimat[, -1], \(x) !any(is.na(x)), logical(1))))
+})
+
+test_that("extract priors", {
+  dino_param <- measr_extract(rstn_dino, "prior")
+  expect_equal(dino_param, dcmstan::default_dcm_priors(dino(), unconstrained()))
+})
+
+test_that("extract classes", {
+  dino_param <- measr_extract(rstn_dino, "classes")
+  expect_equal(colnames(dino_param), c("class", paste0("att", 1:4)))
+  expect_equal(dino_param$class, dplyr::pull(profile_labels(4), "class"))
+
+  exp_label <- dino_param |>
+    dplyr::mutate(
+      new_label = paste0("[", att1, ",", att2, ",", att3, ",", att4, "]")
+    ) |>
+    dplyr::pull("new_label")
+  expect_equal(dino_param$class, exp_label)
+})

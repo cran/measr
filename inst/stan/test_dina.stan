@@ -3,17 +3,15 @@ data {
   int<lower=1> R;                      // number of respondents
   int<lower=1> N;                      // number of observations
   int<lower=1> C;                      // number of classes
-  int<lower=1> A;                      // number of attributes
   array[N] int<lower=1,upper=I> ii;    // item for observation n
   array[N] int<lower=1,upper=R> rr;    // respondent for observation n
   array[N] int<lower=0,upper=1> y;     // score for observation n
   array[R] int<lower=1,upper=N> start; // starting row for respondent R
-  array[R] int<lower=1,upper=I> num;   // number of items for respondent R
-  matrix[C,A] Alpha;                   // attribute pattern for each class
-  matrix[I,C] Xi;                      // class attribute mastery indicator
+  array[R] int<lower=1,upper=I> num;   // number items for respondent R
+  matrix[I,C] Xi;                      // class attribute indicator
 }
 parameters {
-  simplex[C] Vc;                  // base rates of class membership
+  simplex[C] Vc;
 
   ////////////////////////////////// item parameters
   array[I] real<lower=0,upper=1> slip;
@@ -30,7 +28,6 @@ transformed parameters {
   }
 }
 model {
-
   ////////////////////////////////// priors
   Vc ~ dirichlet(rep_vector(1, C));
   slip[1] ~ beta(5, 25);
@@ -73,36 +70,6 @@ model {
   guess[19] ~ beta(5, 25);
   slip[20] ~ beta(5, 25);
   guess[20] ~ beta(5, 25);
-  slip[21] ~ beta(5, 25);
-  guess[21] ~ beta(5, 25);
-  slip[22] ~ beta(5, 25);
-  guess[22] ~ beta(5, 25);
-  slip[23] ~ beta(5, 25);
-  guess[23] ~ beta(5, 25);
-  slip[24] ~ beta(5, 25);
-  guess[24] ~ beta(5, 25);
-  slip[25] ~ beta(5, 25);
-  guess[25] ~ beta(5, 25);
-  slip[26] ~ beta(5, 25);
-  guess[26] ~ beta(5, 25);
-  slip[27] ~ beta(5, 25);
-  guess[27] ~ beta(5, 25);
-  slip[28] ~ beta(5, 25);
-  guess[28] ~ beta(5, 25);
-  slip[29] ~ beta(5, 25);
-  guess[29] ~ beta(5, 25);
-  slip[30] ~ beta(5, 25);
-  guess[30] ~ beta(5, 25);
-  slip[31] ~ beta(5, 25);
-  guess[31] ~ beta(5, 25);
-  slip[32] ~ beta(5, 25);
-  guess[32] ~ beta(5, 25);
-  slip[33] ~ beta(5, 25);
-  guess[33] ~ beta(5, 25);
-  slip[34] ~ beta(5, 25);
-  guess[34] ~ beta(5, 25);
-  slip[35] ~ beta(5, 25);
-  guess[35] ~ beta(5, 25);
 
   ////////////////////////////////// likelihood
   for (r in 1:R) {

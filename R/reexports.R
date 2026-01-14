@@ -1,3 +1,73 @@
+# dcmstan ----------------------------------------------------------------------
+#' @importFrom dcmstan dcm_specify
+#' @export
+dcmstan::dcm_specify
+
+#' @importFrom dcmstan create_profiles
+#' @export
+dcmstan::create_profiles
+
+#' @importFrom dcmstan get_parameters
+#' @export
+dcmstan::get_parameters
+
+#' @importFrom dcmstan prior
+#' @export
+dcmstan::prior
+
+#' @importFrom dcmstan default_dcm_priors
+#' @export
+dcmstan::default_dcm_priors
+
+#' @importFrom dcmstan lcdm
+#' @export
+dcmstan::lcdm
+
+#' @importFrom dcmstan dina
+#' @export
+dcmstan::dina
+
+#' @importFrom dcmstan dino
+#' @export
+dcmstan::dino
+
+#' @importFrom dcmstan nida
+#' @export
+dcmstan::nida
+
+#' @importFrom dcmstan nido
+#' @export
+dcmstan::nido
+
+#' @importFrom dcmstan ncrum
+#' @export
+dcmstan::ncrum
+
+#' @importFrom dcmstan crum
+#' @export
+dcmstan::crum
+
+#' @importFrom dcmstan unconstrained
+#' @export
+dcmstan::unconstrained
+
+#' @importFrom dcmstan independent
+#' @export
+dcmstan::independent
+
+#' @importFrom dcmstan loglinear
+#' @export
+dcmstan::loglinear
+
+#' @importFrom dcmstan hdcm
+#' @export
+dcmstan::hdcm
+
+#' @importFrom dcmstan bayesnet
+#' @export
+dcmstan::bayesnet
+
+# posterior --------------------------------------------------------------------
 #' @importFrom posterior E
 #' @export
 posterior::E
