@@ -9,6 +9,7 @@
 #' @inheritParams loo::loo
 #' @inheritParams dcm2::calc_m2
 #' @inheritParams score
+#' @inheritParams fit_ppmc
 #' @param x A [measrdcm][dcm_estimate()] object.
 #' @param criterion A vector of information criteria to calculate and add to the
 #'   model object. Must be `"loo"`, `"waic"`, or `"log_mll"` for models
@@ -192,12 +193,13 @@ add_reliability <- function(x, overwrite = FALSE, save = TRUE, ...) {
   # determine whether or not to calculate reliability --------------------------
   if (rlang::is_empty(x@reliability) || overwrite) {
     x@reliability <- reliability(x, force = TRUE, ...)
+
+    # re-save model object (if applicable) -----
+    if (!rlang::is_empty(x@file) && save) {
+      write_measrfit(x, file = x@file)
+    }
   }
 
-  # re-save model object (if applicable) ---------------------------------------
-  if (!rlang::is_empty(x@file) && save) {
-    write_measrfit(x, file = x@file)
-  }
   x
 }
 
@@ -206,6 +208,8 @@ add_reliability <- function(x, overwrite = FALSE, save = TRUE, ...) {
 add_fit <- function(
   x,
   method = c("m2", "ppmc"),
+  ndraws = NULL,
+  return_draws = ndraws,
   overwrite = FALSE,
   save = TRUE,
   ...,
@@ -226,14 +230,48 @@ add_fit <- function(
     )
   }
 
+  total_draws <- posterior::ndraws(posterior::as_draws(x))
+  check_number_whole(
+    ndraws,
+    min = 1,
+    max = as.numeric(total_draws),
+    allow_null = TRUE
+  )
+  if (is.null(ndraws)) {
+    ndraws <- total_draws
+  }
+  check_number_whole(
+    return_draws,
+    min = 1,
+    max = as.numeric(ndraws),
+    allow_null = TRUE
+  )
+  if (is.null(return_draws)) {
+    return_draws <- ndraws
+  }
+
+  resave <- FALSE
+
   # m2 -------------------------------------------------------------------------
   if ("m2" %in% method && (rlang::is_empty(x@fit$m2) || overwrite)) {
     x@fit$m2 <- fit_m2(x, ci = ci, force = TRUE)
+    resave <- TRUE
   }
 
   # ppmc -----------------------------------------------------------------------
   if ("ppmc" %in% method) {
-    ppmc_list <- fit_ppmc(x, ..., force = overwrite)
+    ppmc_list <- fit_ppmc(
+      x,
+      ...,
+      ndraws = ndraws,
+      return_draws = return_draws,
+      force = overwrite
+    )
+
+    if (!all(names(ppmc_list) %in% names(x@fit)) || overwrite) {
+      resave <- TRUE
+    }
+
     x@fit <- utils::modifyList(x@fit, ppmc_list)
     x@fit <- lapply(names(x@fit), \(nm) {
       if (!nm %in% names(ppmc_list)) {
@@ -245,7 +283,7 @@ add_fit <- function(
   }
 
   # re-save model object (if applicable) ---------------------------------------
-  if (!rlang::is_empty(x@file) && save) {
+  if (!rlang::is_empty(x@file) && save && resave) {
     write_measrfit(x, file = x@file)
   }
   x
@@ -274,11 +312,12 @@ add_respondent_estimates <- function(
       probs = probs,
       force = TRUE
     )
+
+    # re-save model object (if applicable) -----
+    if (!rlang::is_empty(x@file) && save) {
+      write_measrfit(x, file = x@file)
+    }
   }
 
-  # re-save model object (if applicable) ---------------------------------------
-  if (!rlang::is_empty(x@file) && save) {
-    write_measrfit(x, file = x@file)
-  }
   x
 }

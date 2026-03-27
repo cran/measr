@@ -1,3 +1,14 @@
+# measr 2.0.1
+
+* Fix edge case that prevented that prevented the use of data with missing
+  responses.
+
+* `add_fit()` now automatically saves posterior draws when `method = "ppmc"`.
+
+* `cdi()` now includes the real item identifiers in output.
+
+* `yens_q3()` no longer errors when the pi-matrix contains rvars (#76).
+
 # measr 2.0.0
 
 ## Breaking changes
